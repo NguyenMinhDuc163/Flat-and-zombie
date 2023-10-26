@@ -5,6 +5,8 @@ from pygame import mixer
 from abc import abstractmethod
 from . import constants as c
 
+#  sử dụng cho các trạng thái khác nhau trong trò chơi.
+#  Các phương thức này bao gồm startup, cleanup và update.
 class State():
     def __init__(self):
         self.start_time = 0.0
@@ -23,6 +25,7 @@ class State():
     def update(self, surface, keys, current_time):
         '''abstract method'''
 
+#  cập nhật giao diện người dùng và thực hiện các vòng lặp trò chơi chính.
 class Control():
     def __init__(self):
         self.screen = pg.display.get_surface()
@@ -81,6 +84,7 @@ class Control():
             self.clock.tick(self.fps)
         print('Game over')
 
+#  tải và chia nhỏ các hình ảnh từ một tệp hình ảnh lớn.
 def get_image(sheet, x, y, width, height, colorkey=c.BLACK, scale=1):
         image = pg.Surface([width, height])
         rect = image.get_rect()
@@ -92,6 +96,7 @@ def get_image(sheet, x, y, width, height, colorkey=c.BLACK, scale=1):
                                     int(rect.height*scale)))
         return image
 
+# tải tất cả các khung hình từ một thư mục chứa các tệp hình ảnh khác nhau.
 def load_image_frames(directory, image_name, colorkey, accept):
     frame_list = []
     tmp = {}
@@ -114,6 +119,8 @@ def load_image_frames(directory, image_name, colorkey, accept):
         frame_list.append(tmp[i])
     return frame_list
 
+# tải tất cả các tệp hình ảnh từ một thư mục, bao gồm cả việc xử lý các
+# thư mục con và tạo ra một từ điển hình ảnh.
 def load_all_gfx(directory, colorkey=c.WHITE, accept=('.png', '.jpg', '.bmp', '.gif')):
     graphics = {}
     for name1 in os.listdir(directory):
@@ -143,6 +150,7 @@ def load_all_gfx(directory, colorkey=c.WHITE, accept=('.png', '.jpg', '.bmp', '.
                         graphics[name] = img
     return graphics
 
+# tải các hình ảnh liên quan đến zombie và cây trồng từ các tệp JSON.
 def loadZombieImageRect():
     file_path = os.path.join('source', 'data', 'entity', 'zombie.json')
     f = open(file_path)
@@ -157,6 +165,7 @@ def loadPlantImageRect():
     f.close()
     return data[c.PLANT_IMAGE_RECT]
 
+# tải âm thanh
 pg.init()
 mixer.music.load('source\\bgm.mp3')
 mixer.music.play(-1)

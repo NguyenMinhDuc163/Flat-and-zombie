@@ -24,6 +24,7 @@ plant_frozen_time_list = [7500, 7500, 7500, 30000, 50000, 7500, 7500, 7500, 7500
                           30000, 7500, 50000, 7500, 7500, 50000, 30000, 0, 0]
 all_card_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
+
 def getSunValueImage(sun_value):
     font = pg.font.SysFont(None, 22)
     width = 32
@@ -63,6 +64,7 @@ class Card():
         self.refresh_timer = 0
         self.select = True
 
+    # tải hình ảnh của thẻ cây từ tool.GFX
     def loadFrame(self, name, scale):
         frame = tool.GFX[name]
         rect = frame.get_rect()
@@ -71,6 +73,7 @@ class Card():
         self.orig_image = tool.get_image(frame, 0, 0, width, height, c.BLACK, scale)
         self.image = self.orig_image
 
+    # kiểm tra xem chuột có được nhấp vào thẻ cây không.
     def checkMouseClick(self, mouse_pos):
         x, y = mouse_pos
         if(x >= self.rect.x and x <= self.rect.right and
@@ -78,11 +81,13 @@ class Card():
             return True
         return False
 
+    #kiểm tra xem có thể nhấp vào thẻ cây không, dựa trên giá trị sun_value và thời gian hiện tại.
     def canClick(self, sun_value, current_time):
         if self.sun_cost <= sun_value and (current_time - self.frozen_timer) > self.frozen_time:
             return True
         return False
 
+    # kiểm tra xem thẻ cây có thể được chọn không.
     def canSelect(self):
         return self.select
 
@@ -93,9 +98,11 @@ class Card():
         else:
             self.image.set_alpha(128)
 
+    # đặt thời gian đóng băng của thẻ cây dựa trên thời gian hiện tại.
     def setFrozenTime(self, current_time):
         self.frozen_timer = current_time
 
+    # tạo hình ảnh để hiển thị thẻ cây dựa trên giá trị sun_value và thời gian hiện tại.
     def createShowImage(self, sun_value, current_time):
         time = current_time - self.frozen_timer
         if time < self.frozen_time:  # card cool down status
@@ -113,16 +120,18 @@ class Card():
         else:
             image = self.orig_image
         return image
-
+    # cập nhật hình ảnh của thẻ cây dựa trên giá trị sun_value và thời gian hiện tại.
     def update(self, sun_value, current_time):
         if (current_time - self.refresh_timer) >= 250:
             self.image = self.createShowImage(sun_value, current_time)
             self.refresh_timer = current_time
 
+    #vẽ thẻ cây trên bề mặt được chỉ định.
     def draw(self, surface):
         surface.blit(self.image, self.rect)
 
 class MenuBar():
+    #  tạo ra một thanh menu với một danh sách thẻ card cụ thể và giá trị sun cụ thể.
     def __init__(self, card_list, sun_value):
         self.loadFrame(c.MENUBAR_BACKGROUND)
         self.rect = self.image.get_rect()
@@ -137,14 +146,15 @@ class MenuBar():
         frame = tool.GFX[name]
         rect = frame.get_rect()
         frame_rect = (rect.x, rect.y, rect.w, rect.h)
-
         self.image = tool.get_image(tool.GFX[name], *frame_rect, c.WHITE, 1)
 
+    #  cập nhật thời gian hiện tại và cập nhật các thẻ card trong thanh menu.
     def update(self, current_time):
         self.current_time = current_time
         for card in self.card_list:
             card.update(self.sun_value, self.current_time)
 
+    # tạo hình ảnh của thanh menu dựa trên số lượng và vị trí cụ thể.
     def createImage(self, x, y, num):
         if num == 1:
             return
@@ -160,7 +170,8 @@ class MenuBar():
             x = i * width
             self.image.blit(img, (x,0))
         self.image.set_colorkey(c.BLACK)
-    
+
+    #  thiết lập danh sách thẻ card cụ thể trên thanh menu dựa trên danh sách card đã cho.
     def setupCards(self, card_list):
         self.card_list = []
         x = self.card_offset_x
@@ -169,6 +180,7 @@ class MenuBar():
             x += 55
             self.card_list.append(Card(x, y, index))
 
+    # kiểm tra xem chuột có được nhấp vào thẻ card trong thanh menu không.
     def checkCardClick(self, mouse_pos):
         result = None
         for card in self.card_list:
@@ -177,26 +189,29 @@ class MenuBar():
                     result = (plant_name_list[card.name_index], card)
                 break
         return result
-    
+
+    #  kiểm tra xem chuột có được nhấp vào thanh menu không.
     def checkMenuBarClick(self, mouse_pos):
         x, y = mouse_pos
         if(x >= self.rect.x and x <= self.rect.right and
            y >= self.rect.y and y <= self.rect.bottom):
             return True
         return False
-
+    #  giảm giá trị sun theo giá trị cụ thể.
     def decreaseSunValue(self, value):
         self.sun_value -= value
 
+    # tăng giá trị sun theo giá trị cụ thể.
     def increaseSunValue(self, value):
         self.sun_value += value
 
+    # đặt thời gian đóng băng của thẻ card cụ thể dựa trên tên cây.
     def setCardFrozenTime(self, plant_name):
         for card in self.card_list:
             if plant_name_list[card.name_index] == plant_name:
                 card.setFrozenTime(self.current_time)
                 break
-
+    # vẽ giá trị sun trên thanh menu.
     def drawSunValue(self):
         self.value_image = getSunValueImage(self.sun_value)
         self.value_rect = self.value_image.get_rect()
@@ -205,6 +220,7 @@ class MenuBar():
         
         self.image.blit(self.value_image, self.value_rect)
 
+    #  vẽ thanh menu trên bề mặt được chỉ định.
     def draw(self, surface):
         self.drawSunValue()
         surface.blit(self.image, self.rect)
@@ -218,6 +234,7 @@ class Panel():
         self.selected_num = 0
         self.setupCards(card_list)
 
+    #tải khung hình ảnh theo tên được chỉ định và trả về hình ảnh đã được tải.
     def loadFrame(self, name):
         frame = tool.GFX[name]
         rect = frame.get_rect()
@@ -225,6 +242,8 @@ class Panel():
 
         return tool.get_image(tool.GFX[name], *frame_rect, c.WHITE, 1)
 
+    # tải các hình ảnh cần thiết cho bảng điều khiển, bao gồm hình ảnh nền của menu,
+    # hình ảnh nền của bảng điều khiển và hình ảnh giá trị của tài nguyên mặt trời.
     def loadImages(self, sun_value):
         self.menu_image = self.loadFrame(c.MENUBAR_BACKGROUND)
         self.menu_rect = self.menu_image.get_rect()
@@ -247,6 +266,7 @@ class Panel():
         self.button_rect.x = 155
         self.button_rect.y = 547
 
+    # thiết lập vị trí cho từng thẻ trên bảng điều khiển, dựa trên danh sách thẻ đã cho.
     def setupCards(self, card_list):
         self.card_list = []
         x = PANEL_X_START - PANEL_X_INTERNAL
@@ -258,6 +278,7 @@ class Panel():
             x += PANEL_X_INTERNAL
             self.card_list.append(Card(x, y, index, 0.75))
 
+    #  kiểm tra xem người dùng đã nhấp vào thẻ nào trên bảng điều khiển chưa và thực hiện hành động tương ứng.
     def checkCardClick(self, mouse_pos):
         delete_card = None
         for card in self.selected_cards:
@@ -280,16 +301,18 @@ class Panel():
                     self.addCard(card)
                 break
 
+    # thêm một thẻ vào danh sách các thẻ đã chọn trên bảng điều khiển.
     def addCard(self, card):
         card.setSelect(False)
         y = 8
         x = 78 + self.selected_num * 55
         self.selected_cards.append(Card(x, y, card.name_index))
         self.selected_num += 1
-
+    #  xóa một thẻ từ danh sách các thẻ đã chọn trên bảng điều khiển.
     def deleteCard(self, index):
         self.card_list[index].setSelect(True)
 
+    # kiểm tra xem người dùng đã nhấp vào nút bắt đầu trò chơi trên bảng điều khiển chưa.
     def checkStartButtonClick(self, mouse_pos):
         if self.selected_num < CARD_LIST_NUM:
             return False
@@ -300,12 +323,15 @@ class Panel():
            return True
         return False
 
+    # rả về danh sách các thẻ đã chọn.
     def getSelectedCards(self):
         card_index_list = []
         for card in self.selected_cards:
             card_index_list.append(card.name_index)
         return card_index_list
 
+    # vẽ các thành phần của bảng điều khiển lên màn hình chơi. Điều này bao gồm vẽ hình ảnh nền,
+    # vẽ các thẻ và vẽ nút bắt đầu nếu đủ số lượng thẻ đã chọn.
     def draw(self, surface):
         self.menu_image.blit(self.value_image, self.value_rect)
         surface.blit(self.menu_image, self.menu_rect)
@@ -341,6 +367,7 @@ class MoveCard():
         self.orig_rect = self.orig_image.get_rect()
         self.image = self.orig_image
 
+    # kiểm tra xem người dùng đã nhấp chuột vào thẻ di chuyển hay chưa.
     def checkMouseClick(self, mouse_pos):
         x, y = mouse_pos
         if(x >= self.rect.x and x <= self.rect.right and
@@ -348,6 +375,7 @@ class MoveCard():
             return True
         return False
 
+    #  tạo hình ảnh hiển thị của thẻ di chuyển
     def createShowImage(self):
         if self.rect.w < self.orig_rect.w:
             image = pg.Surface([self.rect.w, self.rect.h])
@@ -357,6 +385,7 @@ class MoveCard():
             image = self.orig_image
         return image
 
+    # cập nhật vị trí của thẻ di chuyển trên thanh di chuyển và thời gian di chuyển của nó.
     def update(self, left_x, current_time):
         if self.move_timer == 0:
             self.move_timer = current_time
@@ -366,6 +395,7 @@ class MoveCard():
                 self.image = self.createShowImage()
             self.move_timer += c.CARD_MOVE_TIME
 
+    #  vẽ hình ảnh của thẻ di chuyển lên màn hình.
     def draw(self, surface):
         surface.blit(self.image, self.rect)
 
@@ -389,6 +419,7 @@ class MoveBar():
 
         self.image = tool.get_image(tool.GFX[name], *frame_rect, c.WHITE, 1)
 
+    #  tạo thẻ di chuyển mới nếu còn chỗ trống trên thanh di chuyển.
     def createCard(self):
         if len(self.card_list) > 0 and self.card_list[-1].rect.right > self.card_end_x:
             return False
@@ -401,6 +432,7 @@ class MoveBar():
         self.card_list.append(MoveCard(x, y, card_name, plant_name))
         return True
 
+    # cập nhật vị trí của các thẻ di chuyển trên thanh di chuyển và thời gian tạo thẻ mới.
     def update(self, current_time):
         self.current_time = current_time
         left_x = self.card_start_x
@@ -412,6 +444,7 @@ class MoveBar():
             if self.createCard():
                 self.create_timer = self.current_time
 
+    # kiểm tra xem người dùng đã nhấp chuột vào thẻ trên thanh di chuyển hay chưa.
     def checkCardClick(self, mouse_pos):
         result = None
         for index, card in enumerate(self.card_list):
@@ -419,7 +452,8 @@ class MoveBar():
                 result = (card.plant_name, card)
                 break
         return result
-    
+
+    # kiểm tra xem người dùng đã nhấp chuột vào thanh di chuyển hay chưa.
     def checkMenuBarClick(self, mouse_pos):
         x, y = mouse_pos
         if(x >= self.rect.x and x <= self.rect.right and
@@ -427,9 +461,11 @@ class MoveBar():
             return True
         return False
 
+    #  xóa một thẻ khỏi danh sách thẻ trên thanh di chuyển.
     def deleateCard(self, card):
         self.card_list.remove(card)
 
+    # vẽ thanh di chuyển cùng với các thẻ di chuyển trên màn hình.
     def draw(self, surface):
         surface.blit(self.image, self.rect)
         for card in self.card_list:

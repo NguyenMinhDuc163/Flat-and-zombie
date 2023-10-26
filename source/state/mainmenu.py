@@ -5,7 +5,8 @@ from .. import constants as c
 class Menu(tool.State):
     def __init__(self):
         tool.State.__init__(self)
-    
+
+    # khởi tạo màn hình menu chính và thiết lập nền và các tùy chọn trong menu.
     def startup(self, current_time, persist):
         self.next = c.LEVEL
         self.persist = persist
@@ -14,13 +15,15 @@ class Menu(tool.State):
         self.setupBackground()
         self.setupOption()
 
+    # thiết lập hình ảnh nền cho menu chính.
     def setupBackground(self):
         frame_rect = [80, 0, 800, 600]
         self.bg_image = tool.get_image(tool.GFX[c.MAIN_MENU_IMAGE], *frame_rect)
         self.bg_rect = self.bg_image.get_rect()
         self.bg_rect.x = 0
         self.bg_rect.y = 0
-        
+
+    # thiết lập các tùy chọn trong menu chính, bao gồm các khung hình ảnh và vị trí của chúng trên màn hình.
     def setupOption(self):
         self.option_frames = []
         frame_names = [c.OPTION_ADVENTURE + '_0', c.OPTION_ADVENTURE + '_1']
@@ -38,7 +41,7 @@ class Menu(tool.State):
         self.option_start = 0
         self.option_timer = 0
         self.option_clicked = False
-    
+    #  kiểm tra xem người dùng đã nhấp vào tùy chọn trên menu chưa.
     def checkOptionClick(self, mouse_pos):
         x, y = mouse_pos
         if(x >= self.option_rect.x and x <= self.option_rect.right and
@@ -46,7 +49,9 @@ class Menu(tool.State):
             self.option_clicked = True
             self.option_timer = self.option_start = self.current_time
         return False
-        
+
+    # cập nhật trạng thái của menu, bao gồm việc kiểm tra xem người dùng có nhấp vào tùy chọn không
+    # và thực hiện các hành động tương ứng.
     def update(self, surface, current_time, mouse_pos, mouse_click):
         self.current_time = self.game_info[c.CURRENT_TIME] = current_time
         

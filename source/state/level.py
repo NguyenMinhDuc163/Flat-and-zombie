@@ -8,7 +8,8 @@ from ..component import map, plant, zombie, menubar
 class Level(tool.State):
     def __init__(self):
         tool.State.__init__(self)
-    
+
+    # khởi tạo các biến cần thiết, tải dữ liệu map và thiết lập background.
     def startup(self, current_time, persist):
         self.game_info = persist
         self.persist = self.game_info
@@ -20,13 +21,15 @@ class Level(tool.State):
         self.setupBackground()
         self.initState()
 
+    # tải dữ liệu map từ file.
     def loadMap(self):
         map_file = 'level_' + str(self.game_info[c.LEVEL_NUM]) + '.json'
         file_path = os.path.join('source', 'data', 'map', map_file)
         f = open(file_path)
         self.map_data = json.load(f)
         f.close()
-    
+
+    #  thiết lập background của level.
     def setupBackground(self):
         img_index = self.map_data[c.BACKGROUND_TYPE]
         self.background_type = img_index
@@ -36,7 +39,8 @@ class Level(tool.State):
         self.level = pg.Surface((self.bg_rect.w, self.bg_rect.h)).convert()
         self.viewport = tool.SCREEN.get_rect(bottom=self.bg_rect.bottom)
         self.viewport.x += c.BACKGROUND_OFFSET_X
-    
+
+    # thiết lập các nhóm sprite cho các loại thực thể khác nhau trong game.
     def setupGroups(self):
         self.sun_group = pg.sprite.Group()
         self.head_group = pg.sprite.Group()
@@ -50,7 +54,8 @@ class Level(tool.State):
             self.zombie_groups.append(pg.sprite.Group())
             self.hypno_zombie_groups.append(pg.sprite.Group())
             self.bullet_groups.append(pg.sprite.Group())
-    
+
+    # thiết lập danh sách zombie.
     def setupZombies(self):
         def takeTime(element):
             return element[0]
@@ -61,12 +66,14 @@ class Level(tool.State):
         self.zombie_start_time = 0
         self.zombie_list.sort(key=takeTime)
 
+    # thiết lập danh sách các ô tô trong game.
     def setupCars(self):
         self.cars = []
         for i in range(self.map_y_len):
             _, y = self.map.getMapGridPos(0, i)
             self.cars.append(plant.Car(-25, y+20, i))
 
+    # cập nhật trạng thái của trò chơi, bao gồm việc kiểm tra xem trò chơi đang ở trạng thái chọn hay chơi.
     def update(self, surface, current_time, mouse_pos, mouse_click):
         self.current_time = self.game_info[c.CURRENT_TIME] = current_time
         if self.state == c.CHOOSE:
@@ -76,12 +83,14 @@ class Level(tool.State):
 
         self.draw(surface)
 
+    #  khởi tạo bản đồ bowling.
     def initBowlingMap(self):
         print('initBowlingMap')
         for x in range(3, self.map.width):
             for y in range(self.map.height):
                 self.map.setMapGridType(x, y, c.MAP_EXIST)
 
+    # khởi tạo trạng thái của trò chơi.
     def initState(self):
         if c.CHOOSEBAR_TYPE in self.map_data:
             self.bar_type = self.map_data[c.CHOOSEBAR_TYPE]
@@ -96,16 +105,19 @@ class Level(tool.State):
             if self.bar_type == c.CHOSSEBAR_BOWLING:
                 self.initBowlingMap()
 
+    # khởi tạo trạng thái chọn.
     def initChoose(self):
         self.state = c.CHOOSE
         self.panel = menubar.Panel(menubar.all_card_list, self.map_data[c.INIT_SUN_NAME])
 
+    # xử lý sự kiện khi đang ở trạng thái chọn.
     def choose(self, mouse_pos, mouse_click):
         if mouse_pos and mouse_click[0]:
             self.panel.checkCardClick(mouse_pos)
             if self.panel.checkStartButtonClick(mouse_pos):
                 self.initPlay(self.panel.getSelectedCards())
 
+    #  khởi tạo trạng thái chơi.
     def initPlay(self, card_list):
         self.state = c.PLAY
         if self.bar_type == c.CHOOSEBAR_STATIC:
@@ -126,6 +138,7 @@ class Level(tool.State):
         self.setupZombies()
         self.setupCars()
 
+    # xử lý sự kiện khi đang ở trạng thái chơi.
     def play(self, mouse_pos, mouse_click):
         if self.zombie_start_time == 0:
             self.zombie_start_time = self.current_time
@@ -184,6 +197,7 @@ class Level(tool.State):
         self.checkCarCollisions()
         self.checkGameState()
 
+    #tạo ra một zombie dựa trên tên và vị trí trên bản đồ.
     def createZombie(self, name, map_y):
         x, y = self.map.getMapGridPos(0, map_y)
         if name == c.NORMAL_ZOMBIE:
@@ -196,11 +210,12 @@ class Level(tool.State):
             self.zombie_groups[map_y].add(zombie.FlagZombie(c.ZOMBIE_START_X, y, self.head_group))
         elif name == c.NEWSPAPER_ZOMBIE:
             self.zombie_groups[map_y].add(zombie.NewspaperZombie(c.ZOMBIE_START_X, y, self.head_group))
-
+    # kiểm tra xem có thể trồng cây không dựa trên vị trí chuột hiện tại.
     def canSeedPlant(self):
         x, y = pg.mouse.get_pos()
         return self.map.showPlant(x, y)
-        
+
+    # thêm một loại cây cụ thể vào bản đồ dựa trên vị trí chuột hiện tại.
     def addPlant(self):
         pos = self.canSeedPlant()
         if pos is None:
@@ -262,6 +277,7 @@ class Level(tool.State):
             self.map.setMapGridType(map_x, map_y, c.MAP_EXIST)
         self.removeMouseImage()
 
+    # thiết lập hình ảnh gợi ý khi di chuột để trồng cây.
     def setupHintImage(self):
         pos = self.canSeedPlant()
         if pos and self.mouse_image:
@@ -281,6 +297,7 @@ class Level(tool.State):
         else:
             self.hint_plant = False
 
+    #thiết lập hình ảnh chuột khi đang trồng cây.
     def setupMouseImage(self, plant_name, select_plant):
         frame_list = tool.GFX[plant_name]
         if plant_name in tool.PLANT_RECT:
@@ -306,6 +323,7 @@ class Level(tool.State):
         self.plant_name = plant_name
         self.select_plant = select_plant
 
+    #loại bỏ hình ảnh chuột khi đã hoàn tất hành động trồng cây.
     def removeMouseImage(self):
         pg.mouse.set_visible(True)
         self.drag_plant = False
@@ -313,6 +331,7 @@ class Level(tool.State):
         self.hint_image = None
         self.hint_plant = False
 
+    #  kiểm tra va chạm giữa đạn và zombie.
     def checkBulletCollisions(self):
         collided_func = pg.sprite.collide_circle_ratio(0.7)
         for i in range(self.map_y_len):
@@ -322,7 +341,8 @@ class Level(tool.State):
                     if zombie and zombie.state != c.DIE:
                         zombie.setDamage(bullet.damage, bullet.ice)
                         bullet.setExplode()
-    
+
+    #  kiểm tra va chạm giữa zombie và cây trong trò chơi.
     def checkZombieCollisions(self):
         if self.bar_type == c.CHOSSEBAR_BOWLING:
             ratio = 0.6
@@ -359,6 +379,7 @@ class Level(tool.State):
                     if hypno_zombie.state == c.WALK:
                         hypno_zombie.setAttack(zombie, False)
 
+    #  kiểm tra va chạm giữa xe và zombie, và xử lý tương ứng nếu có va chạm xảy ra.
     def checkCarCollisions(self):
         collided_func = pg.sprite.collide_circle_ratio(0.8)
         for car in self.cars:
@@ -369,7 +390,7 @@ class Level(tool.State):
                     zombie.setDie()
             if car.dead:
                 self.cars.remove(car)
-
+    # tạo ra một hiệu ứng nổ và ảnh hưởng đến zombie trong phạm vi nổ.
     def boomZombies(self, x, map_y, y_range, x_range):
         for i in range(self.map_y_len):
             if abs(i - map_y) > y_range:
@@ -377,13 +398,14 @@ class Level(tool.State):
             for zombie in self.zombie_groups[i]:
                 if abs(zombie.rect.centerx - x) <= x_range:
                     zombie.setBoomDie()
-
+    # đóng băng zombie khi chúng ở gần các loại cây đóng băng.
     def freezeZombies(self, plant):
         for i in range(self.map_y_len):
             for zombie in self.zombie_groups[i]:
                 if zombie.rect.centerx < c.SCREEN_WIDTH:
                     zombie.setFreeze(plant.trap_frames[0])
 
+    #  loại bỏ cây khỏi trò chơi và thực hiện hành động tương ứng nếu có.
     def killPlant(self, plant):
         x, y = plant.getPosition()
         map_x, map_y = self.map.getMapIndex(x, y)
@@ -404,6 +426,7 @@ class Level(tool.State):
             self.hypno_zombie_groups[map_y].add(zombie)
         plant.kill()
 
+    # kiểm tra các loại cây và thực hiện hành động tương ứng của chúng nếu có.
     def checkPlant(self, plant, i):
         zombie_len = len(self.zombie_groups[i])
         if plant.name == c.THREEPEASHOOTER:
@@ -480,6 +503,7 @@ class Level(tool.State):
             elif (plant.state == c.ATTACK and not can_attack):
                 plant.setIdle()
 
+    # kiểm tra các loại cây và thực hiện hành động tương ứng của chúng nếu có.
     def checkPlants(self):
         for i in range(self.map_y_len):
             for plant in self.plant_groups[i]:
@@ -487,7 +511,7 @@ class Level(tool.State):
                     self.checkPlant(plant, i)
                 if plant.health <= 0:
                     self.killPlant(plant)
-
+    #  kiểm tra xem người chơi đã chiến thắng chưa dựa trên điều kiện thắng của trò chơi.
     def checkVictory(self):
         if len(self.zombie_list) > 0:
             return False
@@ -495,7 +519,8 @@ class Level(tool.State):
             if len(self.zombie_groups[i]) > 0:
                 return False
         return True
-    
+
+    # kiểm tra xem người chơi đã thua cuộc chưa dựa trên điều kiện thua của trò chơi.
     def checkLose(self):
         for i in range(self.map_y_len):
             for zombie in self.zombie_groups[i]:
@@ -503,6 +528,7 @@ class Level(tool.State):
                     return True
         return False
 
+    # kiểm tra trạng thái của trò chơi (chiến thắng, thua, hoặc tiếp tục chơi).
     def checkGameState(self):
         if self.checkVictory():
             self.game_info[c.LEVEL_NUM] += 1
@@ -512,6 +538,7 @@ class Level(tool.State):
             self.next = c.GAME_LOSE
             self.done = True
 
+    # ẽ hình ảnh chuột khi người chơi đang thực hiện hành động trồng cây.
     def drawMouseShow(self, surface):
         if self.hint_plant:
             surface.blit(self.hint_image, self.hint_rect)
@@ -519,11 +546,11 @@ class Level(tool.State):
         self.mouse_rect.centerx = x
         self.mouse_rect.centery = y
         surface.blit(self.mouse_image, self.mouse_rect)
-
+    #  vẽ các hiệu ứng đóng băng zombie.
     def drawZombieFreezeTrap(self, i, surface):
         for zombie in self.zombie_groups[i]:
             zombie.drawFreezeTrap(surface)
-
+    # vẽ các đối tượng trong trò chơi lên màn hình.
     def draw(self, surface):
         self.level.blit(self.background, self.viewport, self.viewport)
         surface.blit(self.level, (0,0), self.viewport)
